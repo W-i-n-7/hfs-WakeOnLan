@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Wake On LAN</title>
+
+    <style>
+        body {
+            background-color: #333;
+            color: whitesmoke;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            min-height: 95vh;
+            flex-direction: column;
+            flex-wrap: wrap;
+            word-break: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="center">
+        <h1>Wake On LAN</h1>
+        <form id="wolForm">
+            <select id="deviceSelect" name="device">
+                <option value="">Choose device</option>
+            </select>
+            <button type="submit">Wake</button>
+        </form>
+    </div>
+
+    <script>
+        async function fetchDevices() {
+            try {
+                const url = new URL(window.location.href);
+                url.searchParams.append('getDevices', '1');
+                
+                const response = await fetch(url.toString());
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('There was a problem fetching devices:', error);
+                return [];
+            }
+        }
+    
+        document.addEventListener('DOMContentLoaded', async () => {
+            const devices = await fetchDevices();
+            
+            devices.forEach(device => {
+                const option = document.createElement('option');
+                option.value = device;
+                option.textContent = device;
+                document.getElementById('deviceSelect').appendChild(option);
+            });
+    
+            document.getElementById('wolForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const selectedDevice = document.getElementById('deviceSelect').selectedIndex;
+    
+                if (!selectedDevice) {
+                    alert('Please select a device');
+                    return;
+                }
+    
+                const url = new URL(window.location.href);
+                url.searchParams.append('device', selectedDevice);
+    
+                try {
+                    const response = await fetch(url.toString());
+                    
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    
+                    const data = await response.text();
+                    alert(data)
+                } catch (error) {
+                    console.error('There was a problem with the fetch operation:', error);
+                    alert('Error')
+                }
+            });
+        });
+    </script>    
+</body>
+</html>
