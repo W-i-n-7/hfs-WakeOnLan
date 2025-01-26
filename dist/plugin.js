@@ -4,7 +4,7 @@ const path = require('path');
 exports.version = 1.0
 exports.apiRequired = 10.3
 exports.description = "Allows you to turn on other computers in your network remotely using HFS on your home-server"
-exports.repo = "W-i-n-7/hfs-wol"
+exports.repo = "W-i-n-7/hfs-WakeOnLan"
 exports.preview = ["https://raw.githubusercontent.com/W-i-n-7/hfs-wol/refs/heads/main/imgs/settings.png"]
 
 exports.config = {
