@@ -1,11 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
-exports.version = 1.0
+exports.version = 1.2
 exports.apiRequired = 10.3
 exports.description = "Allows you to turn on other computers in your network remotely using HFS on your home-server"
 exports.repo = "W-i-n-7/hfs-WakeOnLan"
-exports.preview = ["https://raw.githubusercontent.com/W-i-n-7/hfs-WakeOnLan/refs/heads/main/imgs/settings.png"]
+exports.preview = ["https://raw.githubusercontent.com/W-i-n-7/hfs-wol/refs/heads/main/imgs/settings.png"]
 
 exports.config = {
     broadcastIP: {
@@ -18,6 +18,7 @@ exports.config = {
       type: 'string',
       label: 'Password',
       defaultValue: 'CHANGEME',
+      showIf: values => values.passwordEnabled,
       helperText: 'Password required to send Wake-On-LAN packet.\nIf the password is wrong or not present, It will function like any other url.\nthis is done by adding ?auth=YOUR_PASSWORD to the end of the url'
     },
     passwordEnabled: {
@@ -47,40 +48,6 @@ exports.config = {
         }
       }
     }
-
-
-
-    // dev1mac: {
-    //   type: 'string',
-    //   label: 'Device 1: MAC'
-    // },
-    // dev2mac: {
-    //   type: 'string',
-    //   label: 'Device 2: MAC',
-    //   showIf: values => values.dev2en
-    // },
-    // dev1url: {
-    //   type: 'string',
-    //   label: 'Device 1: url',
-    //   defaultValue: '/wake1',
-    //   helperText: 'URL when accessed will send Wake-On-LAN'
-    // },
-    // dev2url: {
-    //   type: 'string',
-    //   label: 'Device 2: url',
-    //   defaultValue: '/wake2',
-    //   helperText: 'URL when accessed will send Wake-On-LAN',
-    //   showIf: values => values.dev2en
-    // },
-    // dev2en: {
-    //   type: 'boolean',
-    //   label: 'Device 2 enabled'
-    // },
-    // consoleLog: {
-    //   type: 'boolean',
-    //   label: 'Log to console',
-    //   helperText: 'eg \"Wake-on-LAN successful!\"'
-    // }
 }
 
 
@@ -101,56 +68,41 @@ exports.init = async api => {
             ctx.body = data
           } catch (err) {
             ctx.body = 'Error reading file. Use ?device=1 manually.'
-            console.error(err);
+            api.log(err);
           }
           
           return ctx.stop?.() || true
         }
 
-        ctx.body = 'Sending Wake-On-LAN'
-        ctx.status = 200
+        const macAddress = api.getConfig('macs').map(item => item.mac)[ctx.query.device - 1]
+        const deviceName = api.getConfig('macs').map(item => item.name)[ctx.query.device - 1]
 
         try {
-          const macAddress = api.getConfig('macs').map(item => item.mac)[ctx.query.device - 1]
           wake(macAddress, {
             address: api.getConfig('broadcastIP'),
             num_packets: 1,
             interval: 100,
             port: 9
           }, (err) => {
-            if (err) console.error('Wake-on-LAN failed:', macAddress, err);
-            else console.log('Wake-on-LAN successful:', macAddress);
+            if (err) api.log('Error:', deviceName, macAddress, err);
+            else {
+              api.log('Success!', deviceName, macAddress);
+
+              ctx.body = 'Sending Wake-On-LAN'
+              ctx.status = 200  
+            }
           });
         }
-        catch {
+        catch (err) {
+          api.log('Error:', deviceName, macAddress, err.message)
+
+          ctx.body = 'Error'
           ctx.status = 500
         }
 
         return ctx.stop?.() || true
       }
     }
-
-    // if (ctx.path === api.getConfig('dev1url'))
-    // {
-    //   if (ctx.query.auth === api.getConfig('password') || !api.getConfig('passwordEnabled'))
-    //   {
-    //       ctx.body = "Sending Wake-On-LAN"
-
-    //       wake(api.getConfig('dev1mac'), {
-    //         address: api.getConfig('broadcastIP'),
-    //         num_packets: 1,
-    //         interval: 100,
-    //         port: 9
-    //       }, (err) => {
-    //         // if (api.getConfig('consoleLog')) {
-    //         //   if (err) console.error('Wake-on-LAN failed:', api.getConfig('dev1mac'), err);
-    //         //   else console.log('Wake-on-LAN successful:', api.getConfig('dev1mac'));
-    //         // }
-    //       });
-
-    //       return ctx.stop?.() || true
-    //   }
-    // }
   }
 }
 
