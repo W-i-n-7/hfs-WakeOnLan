@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-exports.version = 1.2
+exports.version = 1.21
 exports.apiRequired = 10.3
 exports.description = "Allows you to turn on other computers in your network remotely using HFS on your home-server"
 exports.repo = "W-i-n-7/hfs-WakeOnLan"
@@ -77,6 +77,9 @@ exports.init = async api => {
         const macAddress = api.getConfig('macs').map(item => item.mac)[ctx.query.device - 1]
         const deviceName = api.getConfig('macs').map(item => item.name)[ctx.query.device - 1]
 
+        ctx.body = 'Sending Wake-On-LAN'
+        ctx.status = 200
+
         try {
           wake(macAddress, {
             address: api.getConfig('broadcastIP'),
@@ -87,9 +90,6 @@ exports.init = async api => {
             if (err) api.log('Error:', deviceName, macAddress, err);
             else {
               api.log('Success!', deviceName, macAddress);
-
-              ctx.body = 'Sending Wake-On-LAN'
-              ctx.status = 200  
             }
           });
         }
